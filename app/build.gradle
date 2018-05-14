@@ -30,4 +30,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:27.+'
     compile 'com.android.support:design:27.+'
+    compile 'com.squareup.okhttp:okhttp:2.4.0'
 }

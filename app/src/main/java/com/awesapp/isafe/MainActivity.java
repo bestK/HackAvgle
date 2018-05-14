@@ -17,11 +17,18 @@ import android.widget.Toast;
 import com.awesapp.isafe.misc.LuckyDrawFragment;
 import com.awesapp.isafe.svs.parsers.PSVS0;
 import com.awesapp.isafe.svs.parsers.PSVS21;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
     private String TAG = "hackAvgleHash";
     private String videoId = null;
+    private String hashUrl = null;
+    private String downloadUrl = null;
 
 
     @Override
@@ -36,30 +43,48 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Try Hack Avgle ...", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
                 EditText editText = (EditText) findViewById((com.awesapp.isafe.R.id.videoId));
-                videoId = editText.getText().toString();
                 String result = "value null";
-                if (videoId != null) {
+                if (editText.getText().length() > 0) {
+                    Snackbar.make(view, "Try Hack Avgle ...", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    videoId = editText.getText().toString();
                     result = hackAvgleHash(videoId);
-                    final String finalResult = result;
+//                    Thread getDownLoadUrl = new Thread(new getAvgleDownLoadUrlHandler());
+//                    getDownLoadUrl.start();
+
+                    final String finalResult = hashUrl;
                     TextView textView = (TextView) findViewById(R.id.avgleHash);
                     textView.setText(result);
                     textView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+
                             ClipData myClip;
                             myClip = ClipData.newPlainText("text", finalResult);
                             myClipboard.setPrimaryClip(myClip);
                             Toast.makeText(MainActivity.this, "copied!", Toast.LENGTH_SHORT).show();
                         }
                     });
+                    Toast.makeText(MainActivity.this, "successfully! tap to copy", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, result, Toast.LENGTH_SHORT).show();
                 }
-                Toast.makeText(MainActivity.this, "successfully! tap to copy", Toast.LENGTH_SHORT).show();
 
             }
         });
+    }
+
+    class getAvgleDownLoadUrlHandler implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                downloadUrl = getAvgleDownLoadUrl(hashUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -71,10 +96,26 @@ public class MainActivity extends AppCompatActivity {
      */
     public String hackAvgleHash(String videoId) {
         Log.d(TAG, getApplicationContext().getPackageName().toString());
-        String time = String.valueOf((int) (System.currentTimeMillis() / 1000));
+        String time = getTimeStr();
         String hash = new PSVS21().computeHash(getApplicationContext(), videoId, time);
         String url = "https://avgle.com/mp4.php?vid=" + videoId + "&ts=" + time + "&hash=" + hash;
+        hashUrl = url;
         return url;
     }
 
+    public String getTimeStr() {
+        long timeStampSec = System.currentTimeMillis() / 1000;
+        String timestamp = String.format("%010d", timeStampSec);
+        return timestamp;
+    }
+
+
+    public String getAvgleDownLoadUrl(String url) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
 }
